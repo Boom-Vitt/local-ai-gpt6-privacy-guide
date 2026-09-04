@@ -1,6 +1,6 @@
 # Local AI + Hermes + GPT-6 Privacy Guide
 
-![ปก Local AI และ Hermes รักษาข้อมูลในเครื่อง ก่อนส่งเฉพาะบริบทที่ Mask แล้วให้ GPT-6](assets/local-ai-hermes-youtube-cover-v2.png)
+![ปก Local AI และ Hermes รักษาข้อมูลในเครื่อง ก่อนส่งเฉพาะบริบทที่ Mask แล้วให้ GPT-6](assets/local-ai-hermes-youtube-cover-v3.png)
 
 คู่มือ Thai-first สำหรับออกแบบ workflow AI ที่ให้ข้อมูลอยู่ในเครื่องเป็นค่าเริ่มต้น และส่งขึ้น cloud เฉพาะบริบทที่ถูก mask และได้รับอนุมัติอย่างชัดเจนเท่านั้น
 

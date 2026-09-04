@@ -6,7 +6,7 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-YOUTUBE_HERO = Path("assets/local-ai-hermes-youtube-cover-v2.png")
+YOUTUBE_HERO = Path("assets/local-ai-hermes-youtube-cover-v3.png")
 APPROVED_TRACKED_FILES = frozenset(
     {
         ".env.example",
@@ -18,6 +18,7 @@ APPROVED_TRACKED_FILES = frozenset(
         "assets/README.md",
         YOUTUBE_HERO.as_posix(),
         "assets/local-ai-gpt6-privacy-hero.png",
+        "assets/local-ai-hermes-youtube-cover-v2.png",
         "docs/agent-era-with-hermes.md",
         "docs/architecture.md",
         "docs/open-source-stack.md",
