@@ -65,7 +65,8 @@ class DocumentationContractTests(unittest.TestCase):
         ):
             self.assertIn(phrase, text)
 
-    def test_local_markdown_links_resolve(self) -> None:
+    def test_publishable_local_markdown_links_resolve(self) -> None:
+        """Validate local links only in publishable Markdown, not ignored scratch trees."""
         link_pattern = re.compile(r"\[[^\]]+\]\(([^)]+)\)")
         failures: list[str] = []
         for markdown in ROOT.rglob("*.md"):
