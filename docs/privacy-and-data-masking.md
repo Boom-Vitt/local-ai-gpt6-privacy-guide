@@ -69,5 +69,6 @@
 - **Linkage และ re-identification:** token หรือรายละเอียดที่ดูไม่อ่อนไหวหลายชิ้นอาจเชื่อมกันจนระบุตัวบุคคลได้ จึงต้องทำ context minimization ไม่ใช่ mask เฉพาะ field เดี่ยว
 - **Embedding leakage:** embeddings ไม่ใช่ข้อมูลสาธารณะ อาจเผยความหมายหรือใช้อนุมานข้อมูลต้นทางได้ จึงต้องอยู่ในขอบเขต local และใช้ retention/access control
 - **Prompt injection:** เอกสารอาจมีคำสั่งมุ่งให้ระบบเปิดเผยข้อมูลหรือข้ามนโยบาย ให้ถือเนื้อหา retrieved เป็น untrusted data แยกจาก system instructions และห้ามมันเปลี่ยน decision gate
+- **Agent/tool scope:** Hermes หรือ orchestrator อื่นไม่ควรมีสิทธิ์อ่าน raw file โดยปริยาย ให้เรียกเฉพาะ local tool ที่จำกัด schema และคืนผลหลัง masking; ตรวจ skill, MCP server, telemetry และ network egress ก่อนใช้ข้อมูลจริง
 
 หากขั้นใดไม่ผ่าน ห้ามขยาย context หรือใช้ข้อมูลดิบเพื่อแก้ปัญหา หยุดที่ local workflow, แจ้งเหตุแบบ redacted และให้ผู้ใช้เลือกแก้ไข, ตรวจใหม่ หรือ cancel.

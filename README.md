@@ -1,32 +1,48 @@
-# Local AI + GPT-6 Privacy Guide
+# Local AI + Hermes + GPT-6 Privacy Guide
 
 ![ภาพแนวคิด Local AI ประมวลผลข้อมูลในเครื่อง ผ่าน Data Masking ก่อนส่งบริบทขั้นต่ำขึ้น Cloud API](assets/local-ai-gpt6-privacy-hero.png)
 
 คู่มือ Thai-first สำหรับออกแบบ workflow AI ที่ให้ข้อมูลอยู่ในเครื่องเป็นค่าเริ่มต้น และส่งขึ้น cloud เฉพาะบริบทที่ถูก mask และได้รับอนุมัติอย่างชัดเจนเท่านั้น
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Documentation status: guide](https://img.shields.io/badge/docs-guide-blue.svg)](#อ่านต่อ)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![Documentation status: guide](https://img.shields.io/badge/docs-guide-blue.svg)](#อ่านต่อ) [![Architecture: local-first](https://img.shields.io/badge/architecture-local--first-14b8a6.svg)](docs/architecture.md) [![Privacy: explicit gate](https://img.shields.io/badge/privacy-explicit%20gate-7c3aed.svg)](docs/privacy-and-data-masking.md) [![Hermes: orchestration guide](https://img.shields.io/badge/Hermes-orchestration%20guide-0f172a.svg)](docs/agent-era-with-hermes.md)
 
 > นี่คือคู่มือเชิงหลักการ ไม่ใช่ production security control.
 
 ## English summary
 
-This guide describes a local-first AI workflow for Thai-language data. Documents, PII detection, masking, retrieval, and normal AI work remain local by default. Only minimal masked context may cross an explicit, human-approved cloud gate for a hard task; there is no silent cloud fallback. The repository contains documentation and an offline dry-run payload example, not an installed or running local model.
+This guide describes a local-first AI workflow for Thai-language data, with Hermes as the orchestration layer. Documents, PII detection, masking, retrieval, and normal AI work remain local by default. Only minimal masked context may cross an explicit, human-approved cloud gate for a hard task; there is no silent cloud fallback. The repository contains documentation and an offline dry-run payload example, not an installed or running local model.
+
+> [!TIP]
+> **Hermes + Local AI + masked cloud escalation** คือจุดที่แนวคิดนี้ลงตัวมาก: Hermes ช่วยประสาน workflow และเครื่องมือ, Local AI รับงานประจำ, ส่วน GPT-6 Astra รับเฉพาะงานยากที่ผ่าน local masking และการอนุมัติแล้ว ทั้งหมดนี้ยังต้องอาศัยการกำหนดสิทธิ์และ privacy boundary ที่ชัดเจน—Hermes ไม่ได้ทำให้ข้อมูลปลอดภัยโดยอัตโนมัติ
+
+## เริ่มอ่านจากตรงไหน
+
+| ถ้าต้องการ | เริ่มที่ |
+| --- | --- |
+| เห็นภาพระบบทั้งหมด | [สถาปัตยกรรม Local-first Hybrid AI](docs/architecture.md) |
+| เข้าใจว่าทำไม Hermes จึงเหมาะกับยุค agent | [เมื่อ AI เริ่มลงมือแทนเรา: Local-first + Hermes](docs/agent-era-with-hermes.md) |
+| ตรวจ payload โดยไม่เรียก API | [Safe masked Responses API example](examples/README.md) |
 
 ## แนวคิดในหนึ่งภาพ
 
 ```mermaid
-flowchart LR
-    A[Private documents] --> B[Local ingestion and OCR]
-    B --> C[Local PII detection and masking]
-    C --> D[Local RAG and retrieval]
-    D --> E{Task complexity}
-    E -->|Normal| F[Local AI]
-    E -->|Hard| G[Minimal masked context]
-    G --> H[Explicit approval gate]
-    H --> I[OpenAI Responses API]
-    I --> J[GPT-6 Astra]
+flowchart TB
+    U[User] --> H[Hermes Agent<br/>orchestration]
+    A[Private documents] --> P[Local privacy service<br/>masking + RAG]
+    H -->|Scoped local tool| P
+    P -->|Approved context| H
+    H --> R{Task route}
+    R -->|Normal| L[Local AI<br/>OpenAI-compatible endpoint]
+    R -->|Hard| M[Minimal masked context]
+    M --> G[Explicit human approval]
+    G --> O[OpenAI Responses API]
+    O --> C[GPT-6 Astra]
 ```
+
+Hermes อยู่ตรงกลางในฐานะ **orchestrator ไม่ใช่คลังข้อมูลดิบ**. แนวทางที่แนะนำคือให้ privacy service หรือเครื่องมือ local ที่ตรวจสอบได้เป็นผู้แตะเอกสารจริง ทำ masking/RAG และคืนเฉพาะบริบทที่ได้รับอนุญาต จากนั้น Hermes จึงเลือกเส้นทาง Local AI หรือ cloud gate ตามประเภทงาน
+
+> [!WARNING]
+> `scoped tool`, allowlist, redaction และ approval เป็น defense-in-depth แต่ไม่ใช่ containment. [Security Policy ของ Hermes](https://github.com/NousResearch/hermes-agent/blob/main/SECURITY.md) ระบุว่า OS-level isolation คือขอบเขตที่ใช้บังคับกับ adversarial LLM ได้จริง หากต้องกันเอกสารดิบจาก Hermes ให้แยก data/privacy service ด้วย OS account หรือ container ที่ไม่เปิด raw path ให้ agent และ expose เฉพาะ interface ที่จำเป็น
 
 ## หลักการ 5 ข้อ
 
@@ -90,6 +106,7 @@ assert payload["store"] is False
 ## อ่านต่อ
 
 - [สถาปัตยกรรม Local-first Hybrid AI](docs/architecture.md)
+- [เมื่อ AI เริ่มลงมือแทนเรา: Local-first + Hermes](docs/agent-era-with-hermes.md)
 - [Open Source stack และการตรวจ license](docs/open-source-stack.md)
 - [GPT-6 Astra และ OpenAI Responses API](docs/openai-api.md)
 - [เลือกเส้นทาง Local AI ตามแพลตฟอร์ม](docs/platforms.md)

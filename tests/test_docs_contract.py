@@ -16,6 +16,7 @@ APPROVED_TRACKED_FILES = frozenset(
         "SECURITY.md",
         "assets/README.md",
         "assets/local-ai-gpt6-privacy-hero.png",
+        "docs/agent-era-with-hermes.md",
         "docs/architecture.md",
         "docs/open-source-stack.md",
         "docs/openai-api.md",
@@ -66,7 +67,9 @@ class DocumentationContractTests(unittest.TestCase):
             "Local-first",
             "Data Masking",
             "GPT-6 Astra",
+            "Hermes",
             "gpt-6-astra",
+            "docs/agent-era-with-hermes.md",
             "store=False",
             "Zero Data Retention",
             "macOS",
@@ -75,6 +78,29 @@ class DocumentationContractTests(unittest.TestCase):
             "Open Source",
             "English summary",
         ):
+            self.assertIn(phrase, text)
+
+    def test_agent_era_article_keeps_the_hermes_privacy_boundary(self) -> None:
+        text = (ROOT / "docs/agent-era-with-hermes.md").read_text(encoding="utf-8")
+        for phrase in (
+            "orchestration layer",
+            "deterministic masking/RAG",
+            "Human approval",
+            "Hermes ไม่ควรเป็นคลังเอกสารดิบ",
+            "ขอบเขตความปลอดภัยที่บังคับได้จริง",
+            "cost_per_completed_task",
+            "ยังไม่ได้ติดตั้ง Local AI",
+        ):
+            self.assertIn(phrase, text)
+        for unsupported_or_copied_marker in (
+            "ขอต้อนรับสู่ยุค AGI",
+            "════════",
+        ):
+            self.assertNotIn(unsupported_or_copied_marker, text)
+
+    def test_open_source_stack_covers_hermes_license_and_scope(self) -> None:
+        text = (ROOT / "docs/open-source-stack.md").read_text(encoding="utf-8")
+        for phrase in ("Hermes Agent", "MIT", "single-tenant"):
             self.assertIn(phrase, text)
 
     def test_tracked_local_markdown_links_resolve(self) -> None:

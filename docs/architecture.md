@@ -2,7 +2,7 @@
 
 ## เป้าหมายของสถาปัตยกรรม
 
-คู่มือนี้วางระบบให้ประมวลผลเอกสาร การค้นหา และคำตอบทั่วไปในเครื่องเป็นค่าเริ่มต้น (local-first) เพื่อให้ไฟล์และบริบทละเอียดอยู่ภายในขอบเขตที่ผู้ใช้ควบคุมได้ การใช้ cloud มีไว้สำหรับงานยากที่ local AI ทำไม่ได้หรือคุณภาพไม่พอเท่านั้น และต้องส่งบริบทที่น้อยที่สุดซึ่งผ่านการ masking และการอนุมัติแล้ว
+คู่มือนี้วางระบบให้ประมวลผลเอกสาร การค้นหา และคำตอบทั่วไปในเครื่องเป็นค่าเริ่มต้น (local-first) เพื่อให้ไฟล์และบริบทละเอียดอยู่ภายในขอบเขตที่ผู้ใช้ควบคุมได้ โดยใช้ Hermes เป็นชั้น orchestration ที่เรียกเครื่องมือแบบจำกัดขอบเขตและเลือกเส้นทางประมวลผล การใช้ cloud มีไว้สำหรับงานยากที่ local AI ทำไม่ได้หรือคุณภาพไม่พอเท่านั้น และต้องส่งบริบทที่น้อยที่สุดซึ่งผ่านการ masking และการอนุมัติแล้ว
 
 ตัวอย่าง `gpt-6-astra` ใน repository รับเฉพาะบริบทสังเคราะห์ที่ถูก mask มาแล้ว ไม่ใช่ production masker หรือระบบ RAG ที่พร้อมใช้งานจริง การส่งออกไปยัง cloud ของตัวอย่างต้องเลือก `--send` อย่างชัดแจ้ง
 
@@ -11,24 +11,33 @@
 แผนภาพ Mermaid ต่อไปนี้เป็น canonical data flow ของระบบเป้าหมาย การตรวจจับ PII, masking, retrieval และการตัดสินใจส่งออกเกิดในเครื่องก่อนถึง API ภายนอกเสมอ
 
 ```mermaid
-flowchart LR
-    A[Private documents] --> B[Local ingestion and OCR]
-    B --> C[Local PII detection and masking]
-    C --> D[Local RAG and retrieval]
-    D --> E{Task complexity}
-    E -->|Normal| F[Local AI]
-    E -->|Hard| G[Minimal masked context]
-    G --> H[OpenAI Responses API]
-    H --> I[GPT-6 Astra]
+flowchart TB
+    U[User] --> H[Hermes Agent]
+    A[Private documents] --> P[OS/container-isolated privacy service<br/>ingest + mask + RAG]
+    H -->|Scoped local tool| P
+    P -->|Approved context only| H
+    H --> E{Task complexity}
+    E -->|Normal| L[Local AI]
+    E -->|Hard| M[Minimal masked context]
+    M --> G[Explicit approval gate]
+    G --> O[OpenAI Responses API]
+    O --> C[GPT-6 Astra]
 ```
 
-เส้นทาง `Normal` ตอบจาก Local AI และไม่เปิด API egress ส่วนเส้นทาง `Hard` สร้างเฉพาะ chunk ที่จำเป็นจากผล retrieval ที่ mask แล้ว จึงอาจส่งเป็น minimal masked context ไปยัง OpenAI Responses API ได้หลังผ่าน decision gate เท่านั้น
+เส้นทาง `Normal` ตอบจาก Local AI และไม่เปิด API egress ส่วนเส้นทาง `Hard` สร้างเฉพาะ chunk ที่จำเป็นจากผล retrieval ที่ mask แล้ว จึงอาจส่งเป็น minimal masked context ไปยัง OpenAI Responses API ได้หลังผ่าน decision gate เท่านั้น ในแบบนี้ Hermes เป็น control plane ไม่ใช่ที่เก็บเอกสาร: raw file ควรอยู่หลัง privacy service และไม่ควรถูกเปิดให้ agent อ่านโดยปริยาย
 
-## Trust boundaries
+## ขอบเขตความปลอดภัยที่บังคับได้จริง
+
+[Security Policy ของ Hermes](https://github.com/NousResearch/hermes-agent/blob/63279301bcbdc185c1b07b98a9312eb0c862f26d/SECURITY.md) ระบุว่า **OS-level isolation เป็น security boundary เดียวสำหรับ adversarial LLM**. `scoped tool`, allowlist, approval gate, scanner และ redaction ช่วยลดความผิดพลาด แต่ไม่ใช่ containment เพราะ terminal, code execution, plugin หรือ MCP ที่รันภายใต้สิทธิ์เดียวกันอาจเข้าถึงทรัพยากรของ OS user นั้นได้
+
+หากต้องบังคับว่า Hermes แตะเอกสารดิบไม่ได้ ต้องแยก privacy service และ data vault ด้วย OS account หรือ container ที่ไม่ mount raw path เข้า agent แล้ว expose เฉพาะ local interface ที่จำเป็น สำหรับ production, shared deployment หรือ input ที่ไม่เชื่อถือ ควรใช้ whole-process wrapping เพื่อครอบทั้ง Hermes process tree ตาม threat model ไม่ใช่ sandbox เฉพาะ terminal
+
+## Data zones และ trust boundaries
 
 | ขอบเขต | สิ่งที่อยู่ภายใน | กติกา |
 | --- | --- | --- |
-| Source files | ไฟล์ต้นฉบับ, path และ metadata ของผู้ใช้ | อยู่ในเครื่อง; ไม่เป็น payload ของ cloud |
+| Source files | ไฟล์ต้นฉบับ, path และ metadata ของผู้ใช้ | อยู่ใน OS account/container ที่ Hermes อ่านไม่ได้; ไม่เป็น payload ของ cloud |
+| Hermes orchestration | routing, tool calls และสถานะงานที่จำเป็น | allowlist เฉพาะ skill/tool ที่ตรวจแล้วเป็น defense-in-depth; ใช้ OS isolation เป็น boundary จริง |
 | Local index | chunks, embeddings และ metadata สำหรับ RAG | ถือเป็นข้อมูลอ่อนไหว แม้ไม่มีไฟล์ดิบ; จำกัดสิทธิ์และลบตาม retention policy |
 | Masking/token vault | ตัวตรวจ PII, token ที่ opaque และ token map สำหรับเชื่อมกลับ | token map อยู่ในเครื่องและไม่ออกนอกเครื่อง |
 | Local model endpoint | OCR, detector, retrieval และ Local AI | ใช้ตอบงานปกติ; ห้าม fallback ไป cloud แบบเงียบ ๆ |

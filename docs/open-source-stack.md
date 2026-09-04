@@ -4,6 +4,7 @@
 
 | Role | Candidate | License note |
 | --- | --- | --- |
+| Agent orchestration | [Hermes Agent](https://github.com/NousResearch/hermes-agent) | [MIT code](https://github.com/NousResearch/hermes-agent/blob/63279301bcbdc185c1b07b98a9312eb0c862f26d/LICENSE); ออกแบบเป็น single-tenant agent และใช้ OS-level isolation เป็น security boundary. ตรวจ license/permission ของ skill, plugin และ MCP แยกกัน. |
 | Inference runtime | [vLLM](https://github.com/vllm-project/vllm) | Apache-2.0 code; hardware/model support varies. |
 | PII orchestration | [Microsoft Presidio](https://github.com/microsoft/presidio) | MIT code; custom Thai recognizers required. |
 | Thai NLP | [PyThaiNLP](https://github.com/PyThaiNLP/pythainlp) | Apache-2.0 library; inspect each model/data license. |
