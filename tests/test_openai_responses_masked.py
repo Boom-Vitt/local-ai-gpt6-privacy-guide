@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 import unittest
@@ -37,6 +38,8 @@ class MaskedPayloadTests(unittest.TestCase):
             )
 
     def test_dry_run_is_offline_and_contains_no_raw_marker(self) -> None:
+        env = os.environ.copy()
+        env.pop("OPENAI_MODEL", None)
         completed = subprocess.run(
             [
                 sys.executable,
@@ -45,6 +48,7 @@ class MaskedPayloadTests(unittest.TestCase):
             ],
             check=True,
             capture_output=True,
+            env=env,
             text=True,
         )
         payload = json.loads(completed.stdout)
@@ -52,6 +56,24 @@ class MaskedPayloadTests(unittest.TestCase):
         self.assertIs(payload["store"], False)
         for marker in SYNTHETIC_RAW_MARKERS:
             self.assertNotIn(marker, completed.stdout)
+
+    def test_dry_run_honors_explicit_model_override(self) -> None:
+        env = os.environ.copy()
+        env["OPENAI_MODEL"] = "synthetic-model-override"
+        completed = subprocess.run(
+            [
+                sys.executable,
+                str(ROOT / "examples" / "openai_responses_masked.py"),
+                "--dry-run",
+            ],
+            check=True,
+            capture_output=True,
+            env=env,
+            text=True,
+        )
+
+        payload = json.loads(completed.stdout)
+        self.assertEqual(payload["model"], "synthetic-model-override")
 
 
 if __name__ == "__main__":

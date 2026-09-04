@@ -1,51 +1,62 @@
 from __future__ import annotations
 
 import re
+import subprocess
 import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-REQUIRED_FILES = (
-    "README.md",
-    "LICENSE",
-    "SECURITY.md",
-    "CONTRIBUTING.md",
-    ".env.example",
-    ".gitignore",
-    "assets/README.md",
-    "docs/architecture.md",
-    "docs/open-source-stack.md",
-    "docs/openai-api.md",
-    "docs/platforms.md",
-    "docs/privacy-and-data-masking.md",
-    "examples/README.md",
-    "examples/openai_responses_masked.py",
+APPROVED_TRACKED_FILES = frozenset(
+    {
+        ".env.example",
+        ".gitignore",
+        "CONTRIBUTING.md",
+        "LICENSE",
+        "README.md",
+        "SECURITY.md",
+        "assets/README.md",
+        "docs/architecture.md",
+        "docs/open-source-stack.md",
+        "docs/openai-api.md",
+        "docs/platforms.md",
+        "docs/privacy-and-data-masking.md",
+        "docs/superpowers/plans/2026-09-04-local-ai-gpt6-privacy-guide.md",
+        "docs/superpowers/specs/2026-09-04-local-ai-gpt6-privacy-guide-design.md",
+        "examples/README.md",
+        "examples/openai_responses_masked.py",
+        "tests/test_docs_contract.py",
+        "tests/test_openai_responses_masked.py",
+    }
 )
+MARKDOWN_LINK_PATTERN = re.compile(r"\[[^\]]+\]\(([^)]+)\)")
 SECRET_PATTERNS = (
     re.compile(r"sk-[A-Za-z0-9_-]{20,}"),
     re.compile(r"gh[pousr]_[A-Za-z0-9]{20,}"),
 )
-EXCLUDED_DIRECTORY_NAMES = {
-    ".git",
-    ".superpowers",
-    ".venv",
-    "venv",
-    "env",
-    "__pycache__",
-    ".cache",
-    ".mypy_cache",
-    ".pytest_cache",
-    ".ruff_cache",
-}
 
 
-def is_publishable_path(path: Path) -> bool:
-    return not any(part in EXCLUDED_DIRECTORY_NAMES for part in path.parts)
+def tracked_files() -> frozenset[str]:
+    completed = subprocess.run(
+        ["git", "ls-files", "-z"],
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+    )
+    return frozenset(
+        path.decode("utf-8")
+        for path in completed.stdout.split(b"\0")
+        if path
+    )
 
 
 class DocumentationContractTests(unittest.TestCase):
-    def test_required_files_exist(self) -> None:
-        missing = [path for path in REQUIRED_FILES if not (ROOT / path).is_file()]
+    def test_tracked_inventory_matches_approved_public_tree(self) -> None:
+        self.assertEqual(tracked_files(), APPROVED_TRACKED_FILES)
+
+    def test_every_approved_tracked_file_exists(self) -> None:
+        missing = [
+            path for path in sorted(APPROVED_TRACKED_FILES) if not (ROOT / path).is_file()
+        ]
         self.assertEqual(missing, [])
 
     def test_readme_has_core_contract(self) -> None:
@@ -65,35 +76,43 @@ class DocumentationContractTests(unittest.TestCase):
         ):
             self.assertIn(phrase, text)
 
-    def test_publishable_local_markdown_links_resolve(self) -> None:
-        """Validate local links only in publishable Markdown, not ignored scratch trees."""
-        link_pattern = re.compile(r"\[[^\]]+\]\(([^)]+)\)")
+    def test_tracked_local_markdown_links_resolve(self) -> None:
         failures: list[str] = []
-        for markdown in ROOT.rglob("*.md"):
-            if not is_publishable_path(markdown):
-                continue
-            for target in link_pattern.findall(markdown.read_text(encoding="utf-8")):
+        tracked = tracked_files()
+        markdown_paths = sorted(
+            path for path in tracked if Path(path).suffix.lower() == ".md"
+        )
+        for relative_path in markdown_paths:
+            markdown = ROOT / relative_path
+            for target in MARKDOWN_LINK_PATTERN.findall(
+                markdown.read_text(encoding="utf-8")
+            ):
                 if target.startswith(("http://", "https://", "#", "mailto:")):
                     continue
                 file_part = target.split("#", 1)[0]
                 if not file_part:
                     continue
-                if not (markdown.parent / file_part).resolve().exists():
-                    failures.append(f"{markdown.relative_to(ROOT)} -> {target}")
+                resolved = (markdown.parent / file_part).resolve()
+                try:
+                    tracked_target = resolved.relative_to(ROOT.resolve()).as_posix()
+                except ValueError:
+                    failures.append(f"{relative_path} -> {target}")
+                    continue
+                if not resolved.exists() or tracked_target not in tracked:
+                    failures.append(f"{relative_path} -> {target}")
         self.assertEqual(failures, [])
 
-    def test_repository_contains_no_secret_shaped_values(self) -> None:
+    def test_tracked_readable_text_contains_no_secret_shaped_values(self) -> None:
         failures: list[str] = []
-        for path in ROOT.rglob("*"):
-            if not path.is_file() or not is_publishable_path(path):
-                continue
+        for relative_path in sorted(tracked_files()):
+            path = ROOT / relative_path
             try:
                 text = path.read_text(encoding="utf-8")
             except UnicodeDecodeError:
                 continue
             for pattern in SECRET_PATTERNS:
                 if pattern.search(text):
-                    failures.append(str(path.relative_to(ROOT)))
+                    failures.append(relative_path)
         self.assertEqual(failures, [])
 
 
