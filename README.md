@@ -1,5 +1,7 @@
 # Local AI + GPT-6 Privacy Guide
 
+![ภาพแนวคิด Local AI ประมวลผลข้อมูลในเครื่อง ผ่าน Data Masking ก่อนส่งบริบทขั้นต่ำขึ้น Cloud API](assets/local-ai-gpt6-privacy-hero.png)
+
 คู่มือ Thai-first สำหรับออกแบบ workflow AI ที่ให้ข้อมูลอยู่ในเครื่องเป็นค่าเริ่มต้น และส่งขึ้น cloud เฉพาะบริบทที่ถูก mask และได้รับอนุมัติอย่างชัดเจนเท่านั้น
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)

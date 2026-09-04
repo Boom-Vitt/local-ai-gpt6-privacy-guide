@@ -15,6 +15,7 @@ APPROVED_TRACKED_FILES = frozenset(
         "README.md",
         "SECURITY.md",
         "assets/README.md",
+        "assets/local-ai-gpt6-privacy-hero.png",
         "docs/architecture.md",
         "docs/open-source-stack.md",
         "docs/openai-api.md",
