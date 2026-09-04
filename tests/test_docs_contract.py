@@ -6,6 +6,7 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+YOUTUBE_HERO = Path("assets/local-ai-hermes-youtube-cover-v2.png")
 APPROVED_TRACKED_FILES = frozenset(
     {
         ".env.example",
@@ -15,6 +16,7 @@ APPROVED_TRACKED_FILES = frozenset(
         "README.md",
         "SECURITY.md",
         "assets/README.md",
+        YOUTUBE_HERO.as_posix(),
         "assets/local-ai-gpt6-privacy-hero.png",
         "docs/agent-era-with-hermes.md",
         "docs/architecture.md",
@@ -79,6 +81,20 @@ class DocumentationContractTests(unittest.TestCase):
             "English summary",
         ):
             self.assertIn(phrase, text)
+
+    def test_readme_uses_a_large_widescreen_youtube_hero(self) -> None:
+        text = (ROOT / "README.md").read_text(encoding="utf-8")
+        hero_match = re.search(r"!\[[^\]]*\]\((assets/[^)]+)\)", text)
+        self.assertIsNotNone(hero_match)
+        self.assertEqual(hero_match.group(1), YOUTUBE_HERO.as_posix())
+
+        data = (ROOT / YOUTUBE_HERO).read_bytes()
+        self.assertEqual(data[:8], b"\x89PNG\r\n\x1a\n")
+        width = int.from_bytes(data[16:20], "big")
+        height = int.from_bytes(data[20:24], "big")
+        self.assertGreaterEqual(width, 1280)
+        self.assertGreaterEqual(height, 720)
+        self.assertAlmostEqual(width / height, 16 / 9, delta=0.002)
 
     def test_agent_era_article_keeps_the_hermes_privacy_boundary(self) -> None:
         text = (ROOT / "docs/agent-era-with-hermes.md").read_text(encoding="utf-8")
