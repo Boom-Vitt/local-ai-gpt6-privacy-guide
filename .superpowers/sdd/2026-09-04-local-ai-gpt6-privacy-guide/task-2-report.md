@@ -83,3 +83,30 @@ call, real key, publication, or push was performed.
 - The live path is intentionally untested and requires the reader's own SDK,
   API key, and explicit `--send` choice.
 - `store=False` alone is not a Zero Data Retention guarantee.
+
+## Fix Round 1
+
+Addressed reviewer feedback by adding the explicit warning that masking is
+not guaranteed anonymization and that re-identification risk must be evaluated
+before external egress in `examples/README.md`.
+
+Covering checks:
+
+```text
+$ rg -n -e "--dry-run" -e "--send" -e "not a PII detector" -e "Masking is not guaranteed anonymization" -e "re-identification" -e "local detector" -e "second egress scan" -e "store=False does not grant Zero Data Retention" examples/README.md
+3:Run `--dry-run` to print the masked request payload without making a network
+6:`--send` is opt-in. It requires the reader to install the OpenAI SDK and
+10:detector. Masking is not guaranteed anonymization; evaluate re-identification
+11:risk before any external egress. Production systems need a local detector,
+13:second egress scan, bounded retry, and redacted logging.
+
+$ python3 -m unittest tests/test_openai_responses_masked.py -v
+test_dry_run_is_offline_and_contains_no_raw_marker ... ok
+test_payload_uses_gpt6_responses_shape_without_storage ... ok
+test_raw_marker_guard_rejects_leak ... ok
+Ran 3 tests in 0.030s
+OK
+
+$ git diff --check
+exit=0
+```

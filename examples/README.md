@@ -7,7 +7,9 @@ request. This is the only mode used by repository verification.
 provide `OPENAI_API_KEY` themselves.
 
 The script receives already-masked synthetic context; it is not a PII
-detector. Production systems need a local detector, human preview/approval,
+detector. Masking is not guaranteed anonymization; evaluate re-identification
+risk before any external egress. Production systems need a local detector,
+human preview/approval,
 second egress scan, bounded retry, and redacted logging.
 
 `store=False` does not grant Zero Data Retention.
