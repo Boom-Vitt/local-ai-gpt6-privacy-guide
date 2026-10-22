@@ -1,3 +1,15 @@
+<!-- BBN:HEADER:START -->
+<div align="center">
+
+<img src=".github/brand/banner.svg" width="100%" alt="Local AI Privacy Guide — Local-first AI with masked, selective GPT-6 escalation" />
+
+<a href="https://github.com/Boom-Vitt/local-ai-gpt6-privacy-guide/stargazers"><img src="https://img.shields.io/github/stars/Boom-Vitt/local-ai-gpt6-privacy-guide?style=flat-square&color=14b8a6&labelColor=0b1220" alt="stars" /></a>
+<a href="https://github.com/Boom-Vitt/local-ai-gpt6-privacy-guide/commits/main"><img src="https://img.shields.io/github/last-commit/Boom-Vitt/local-ai-gpt6-privacy-guide?style=flat-square&color=14b8a6&labelColor=0b1220" alt="last commit" /></a>
+<a href="https://github.com/Boom-Vitt"><img src="https://img.shields.io/badge/by-BoomBigNose-14b8a6?style=flat-square&labelColor=0b1220" alt="by BoomBigNose" /></a>
+
+</div>
+<!-- BBN:HEADER:END -->
+
 # Local AI + Hermes + GPT-6 Privacy Guide
 
 ![ปก Local AI และ Hermes รักษาข้อมูลในเครื่อง ก่อนส่งเฉพาะบริบทที่ Mask แล้วให้ GPT-6](assets/local-ai-hermes-youtube-cover-v3.png)
@@ -123,3 +135,15 @@ assert payload["store"] is False
 ## License / Security / Contributing
 
 เผยแพร่ภายใต้ [MIT License](LICENSE). ก่อนใช้งานหรือส่ง contribution โปรดอ่าน [Security Policy](SECURITY.md) และ [Contributing guide](CONTRIBUTING.md).
+
+<!-- BBN:FOOTER:START -->
+---
+
+<div align="center">
+
+**สร้างโดย [BoomBigNose](https://github.com/Boom-Vitt)** · [Kruoop.com](https://kruoop.com) แหล่งเรียน AI + คอมมูนิตี้ · [Seeneo.ai](https://seeneo.ai) · [YouTube 220K](https://www.youtube.com/@BoomBigNose)
+
+<sub>ถ้าโปรเจกต์นี้มีประโยชน์ กด ⭐ ให้กำลังใจกันได้เลย</sub>
+
+</div>
+<!-- BBN:FOOTER:END -->
